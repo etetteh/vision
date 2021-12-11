@@ -484,15 +484,15 @@ def main(cfg):
     ######### Recipe 1 #########
     ### lr optimization ###
     if cfg.lr_optim:
-        config["lr"] = tune.qloguniform(1e-4, 1e-1, 1e-5)
-        config["lr_warmup_decay"] = tune.qloguniform(1e-5, 1e-2, 1e-6)
+        config["lr"] = tune.qloguniform(1e-3, 1e-1, 1e-3)
+        config["lr_warmup_decay"] = tune.qloguniform(1e-4, 1e-2, 1e-4)
         config["lr_warmup_epochs"] = tune.randint(3, 15)
-        config["batch_size"] = tune.choice([8, 16, 32, 64])
+        config["batch_size"] = tune.choice([32, 64, 128])
         
         hyperparam_mutations["lr"] = [1e-4, 1e-1]
         hyperparam_mutations["lr_warmup_decay"] = [1e-5, 1e-2]
         hyperparam_mutations["lr_warmup_epochs"] = [3, 15]
-        hyperparam_mutations["batch_size"] = [8, 64]
+        hyperparam_mutations["batch_size"] = [32, 128]
 
     ######### Recipe 2 #########   
     if cfg.trivial:
