@@ -363,7 +363,7 @@ def train(config, checkpoint_dir=None, data_dir=None):
     elif "resnet" in cfg.model:
         if cfg.fext:
             parameters = model.fc.parameters()
-        ese:
+        else:
             parameters = model.parameters()
         
     
