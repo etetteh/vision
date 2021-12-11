@@ -314,12 +314,20 @@ def train(config, checkpoint_dir=None, data_dir=None):
     
     if "deit" in cfg.model:
         model = torch.hub.load("facebookresearch/deit:main", cfg.model+"_patch16_224", pretrained=True)
+        if cfg.fext:
+            print(f"Performing feature extraction with {cfg.model} model")
+            for param in model.parameters():
+                param.requires_grad = False
         out_chn = model.patch_embed.proj.out_channels
         model.patch_embed.proj = torch.nn.Conv2d(1, out_chn, kernel_size=(16, 16), stride=(16, 16))
         num_ftrs = model.head.in_features
         model.head = nn.Linear(num_ftrs, num_classes)
     elif "resnet" in cfg.model:
         model = torchvision.models.__dict__[cfg.model](pretrained=True)
+        if cfg.fext:
+            print(f"Performing feature extraction with {cfg.model} model")
+            for param in model.parameters():
+                param.requires_grad = False
         out_chn = model.conv1.out_channels
         model.conv1 = torch.nn.Conv2d(1, out_chn, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         num_ftrs = model.fc.in_features
@@ -347,8 +355,17 @@ def train(config, checkpoint_dir=None, data_dir=None):
         alpha = min(1.0, alpha * adjust)
         ema_model = utils.ExponentialMovingAverage(model, device=device, decay=1.0 - alpha)
         
-    
-    parameters = model.parameters()
+    if "deit" in cfg.model:
+        if cfg.fext:
+            parameters = model.head.parameters()
+        else:
+            parameters = model.parameters()
+    elif "resnet" in cfg.model:
+        if cfg.fext:
+            parameters = model.fc.parameters()
+        ese:
+            parameters = model.parameters()
+        
     
     ######### Recipe 8 #########                   
     if cfg.wd_tune:
@@ -663,6 +680,7 @@ def get_args_parser(add_help=True):
     parser.add_argument("--dataset", default="google", type=str, help="Choose one of ['nih', 'chex', 'mimic', 'pc', 'google', 'rsna', 'openi']")
     parser.add_argument("--seed", default=99, type=int, help="")
     parser.add_argument("--model", default="deit_tiny", type=str, help="Choose any ResNet or DEIT model, passing its name. Eg: resnet18, resnet50, deit_tiny, deit_base")
+    parser.add_argument("--fext", action="store_true", default=False, help="Whether to perform feature extraction or finetune the entire model")
     parser.add_argument("--num_samples", default=5, type=int, help="Number of search trials")
     parser.add_argument("--epochs", default=5, type=int, help="")
     parser.add_argument("--cpus_per_trial", default=1, type=int, help="Number of CPUs for each trial")
